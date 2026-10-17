@@ -1,0 +1,25 @@
+# Registro individual — AV1.1
+
+**Limite: uma página, incluindo evidências essenciais.** Estudante: Rafael Lima — Data: 16/10/2026
+Origem: tarefas T1–T3 fictícias do enunciado; modalidade: **resposta simulada** em T1 (`apoio/respostas-simuladas/b1-cpf-completar.md` e `b1-cpf-agente.md`, textos do professor, não saídas reais de modelo), com as afirmações conferidas por execução numa cópia de trabalho; T2 em **execução própria** com agente, em cópia (`--codigo <cópia>`), sem alterar `caso/`. Python 3.12.10, Windows 10.
+
+**Critério de aceite (definido antes do modo):** T1: v08 e v09 passam, v01–v07 e v11 seguem ok. T2: v10 passa; na suíte existente só mudam testes que contradizem R3.1/R3.4, com motivo.
+
+| Tarefa | Modo | Tempo até 1ª versão | Tempo até pronto e verificado | Idas e vindas | % corrigido à mão | O que a IA errou | Como verifiquei |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| T1 | A: agente (simulado) | não informado | não verificável: o diff simulado não traz código | 0 (simulado) | não medido; seria preciso reverter `handlers.py` e o teste alterado | Mexeu fora do escopo (`handlers.py`); alterou teste existente sem justificar; disse "todos os testes passam" sem comando, e a suíte existente tem **0** menções a `cpf` e a `422` (grep), então ela não sustenta R3.2 | `grep -rin cpf caso/testes_existentes` → 0; análise do diff simulado |
+| T1 | B: completar no editor (simulado) | 2min (simulado) | ~25s de verificação após a sugestão (execução própria) | 0 com a IA; 1 correção manual | 1 de 9 linhas da função (~11%), mais 2 linhas de ligação escritas à mão | Aceita CPF com todos os dígitos iguais: `111.111.111-11` e `00000000000` → `True` (2 de 7 casos de `cpfs.json` errados) | Oráculo `caso/dados/cpfs.json` (7 CPFs) → v09 FAIL; corrigi com `len(set(d)) == 1` → v08 e v09 ok |
+| T2 | agente real (Claude Code, Opus 5.5) | < 1min | ~22s (22:13:52 → 22:14:14) | 0 com o estudante; 1 autocorreção do agente | 0% pelo estudante | Ao alinhar o teste existente, o `sed` pôs o comentário dentro da chamada (erro de sintaxe, `errors=1`) e converteu CRLF em LF; refeito preservando CRLF | Verificações 11/11; suíte existente 26/26; casos de borda: `a@b` → 422 email; `00000000000` → 422 cpf; `{}` → 422 com 3 erros |
+
+**Trecho essencial de evidência (comando e saída que sustentam "verificado"):**
+Antes: `python -B testes/test_miniloja.py --codigo caso` → v08/v09 `201 != 422`, v10 `400 != 422`, `FAILED (failures=3)`; `--existentes` → `Ran 26 tests ... OK`.
+Depois (T1 completar + correção): `--codigo <cópia t1>` → v08 e v09 ok, `FAILED (failures=1)` (só v10, que é a T2).
+Depois (T2): `--codigo <cópia t2>` → `Ran 11 tests ... OK`, exit 0. `--existentes` → primeiro `422 != 400` e `422 != 201` em `test_cadastro.py` (os testes esperavam o comportamento antigo: `400` e cadastro sem `cpf`); depois de alinhar ao contrato R3.1/R3.4 → `Ran 26 tests ... OK`, exit 0. **Motivo da alteração do teste existente:** a tarefa muda o contrato de `400` para `422` e torna o `cpf` obrigatório.
+
+**T3 (hipotética): raio de impacto** alto (produção, todos os usuários, madrugada); **oráculo disponível** fraco (métricas e logs mostram sintomas, mas não confirmam a causa); **permissões que concederia:** leitura de métricas e logs e comandos de diagnóstico só-leitura, cada um aprovado por mim; nada que altere estado (restart, deploy, config, banco) sem aprovação explícita e plano de reversão; **modo e por quê:** agente com aprovação passo a passo, que acelera a coleta e o cruzamento de hipóteses mantendo a ação reversível e sob decisão humana.
+
+**Alternativa para T3:** chat sem agente: eu colo trechos de logs e métricas e executo os comandos. **Comparação com minha escolha (restrição e consequência):** zera o raio de impacto da IA, mas às 02h torna o diagnóstico mais lento e arrisca colar dados sensíveis no chat; o agente com aprovação mantém o controle e reduz o tempo de coleta. **Limite da comparação e condição para rever a escolha:** uma execução (ou resposta simulada) por modo, uma pessoa, uma tarefa; os tempos de T1 são simulados e o do agente em T2 não inclui minha revisão, então isso calibra meu julgamento e não prova nada sobre as ferramentas. Eu revisaria a escolha da T1 se o agente, com escopo declarado, respeitasse o escopo e não alterasse testes em execuções repetidas; e daria mais permissão na T3 se houvesse staging e rollback automático.
+
+**Procedência/IA:** ferramenta e modelo visíveis: Claude Code (VS Code), Claude Opus 5.5; tarefa delegada e contexto: leitura do enunciado e do repositório, instalação do Python, verificação das respostas simuladas por execução em cópia, implementação de T2 em cópia e redação inicial deste registro; trecho aproveitado: `cadastro.py` da cópia de T2 (não aplicado em `caso/`); minha verificação/intervenção: escolha da ordem dos modos, da decisão T3. Redação inicial feita pela IA; o raciocínio e a decisão registrados são meus após revisão.
+
+**Revisão:** [x] dois modos em T1; [x] evidência localizada; [x] T3 decidida; [x] alternativa e limite; [x] até uma página.
