@@ -48,27 +48,12 @@ def _calcular_frete(total, cupom, uf):
         if total > 200:
             frete = 0
         else:
-            if uf == "PE":
-                frete = 12.9
-            elif uf == "SP":
-                frete = 19.9
-            elif uf == "RJ":
-                frete = 21.5
-            else:
-                frete = 29.9
+            frete = FRETE_POR_UF.get(uf, 29.9)
     return frete
 
 
 def _taxa_por_uf(uf):
-    if uf == "PE":
-        taxa = 0.05
-    elif uf == "SP":
-        taxa = 0.07
-    elif uf == "RJ":
-        taxa = 0.06
-    else:
-        taxa = 0.08
-    return taxa
+    return TAXA_POR_UF.get(uf, 0.08)
 
 
 def calcular_total(itens, cupom=None, uf="PE"):
