@@ -1,0 +1,28 @@
+# Registro individual — AV1.4
+
+**Limite: uma página, incluindo evidências essenciais.** Estudante: Rafael Lima — Data: 23/10/2026
+Origem: repositório desconhecido liberado no bloco; modalidade: **execução/leitura própria** (li o código e respondi às 5 perguntas antes de usar IA; aprovei manualmente a execução de cada comando).
+
+| # | Afirmação | Trecho (arquivo:linha) | Contraevidência buscada | Status |
+| --- | --- | --- | --- | --- |
+| 1 | A ingestão começa em `ingest.run`, disparada por `jobs ingest` e por `refresh_diario`; o cron chama pelo CLI | `ingest.py:43`; `jobs.py:23`; `jobs.py:10`; `scripts/rodar_tudo.sh:6,11` | grep `ingest.run` no repo: só 2 chamadas, ambas em `jobs.py` | confirmada |
+| 2 | `gravar_trabalho` **não** é o único a escrever em `trabalhos`: há 4 escritores | `ingest.py:17` (INSERT OR REPLACE, chamado em `ingest.py:53`); `jobs.py:12`; `exporta_parceiro.py:11`; `scripts/corrigir_anos.sql:2` (via `jobs.py:30-33`) | grep de INSERT/UPDATE/DELETE em `trabalhos`: achou os 4. `jobs sql` aceita qualquer arquivo, então o conjunto é "no repositório" | confirmada (refuta a hipótese inicial de 1 escritor) |
+| 3 | Trabalho: `concepts[0]` da API; autor: maior score entre `x_concepts` nível 0. Dois critérios distintos, ambos dependem de campos da API | `ingest.py:14-15`; `instituicoes.py:21-26`; `conceitos.py:20-26` | grep `x_concepts`: só `instituicoes.py:22`. Doc oficial: `concepts` e `x_concepts` deprecated | confirmada |
+| 4 | Há 5 relatórios, 4 habilitados; só `jobs relatorio` os dispara (cron chama 2); descoberta por `getattr` | `relatorios.py:7-38,41-45`; `config.ini:21`; `jobs.py:26-27`; `rodar_tudo.sh:9-10` | `rel_conceitos` existe e falha no CLI (golden `07`), mas roda chamado direto (golden `08`) | confirmada |
+| 5 | `config.py` lê `CIENTO_AMBIENTE`; o cron exporta `CIENTO_AMBIENT` (typo), então o agendamento roda em **dev** e os overrides de `[producao]` não valem; `CIENTO_OFFLINE=1` vale | `config.py:11`; `rodar_tudo.sh:3-4`; `cliente.py:26` | grep `CIENTO_`: só 3 variáveis; `por_pagina` (`config.ini:6`) sem uso no código | confirmada |
+
+**Respostas do assistente que pareciam certas e estavam erradas:** (a) ao propor o plano, o assistente sugeriu a fatia 1 como "trocar `urllib` por cliente isolado, só mecânico", com `requests` como referência. **Como refutei:** `requirements.txt` declara `requests`, mas `cliente.py:6-7` usa `urllib`; a documentação oficial mostra que a mudança real é de autenticação (`mailto` ignorado, `api_key`), e a chave de cache é o MD5 da URL (`cliente.py:21`), então mudar a URL invalida o cache offline: não é só mecânico. (b) O assistente escreveu que o `mailto` é ignorado "desde 2026"; a página de Deprecations não dá essa data. **Como refutei:** reli a página e corrigi o texto. Além disso, minha leitura inicial (só `gravar_trabalho` escreve em `trabalhos`) foi refutada por busca de INSERT/UPDATE/DELETE: há 3 escritores a mais, incluindo o SQL do cron.
+
+**Caracterização antes de mudar (comando e saída gravada):** `python -B exercicios/aula-4/golden-master/golden.py record`, depois `check` → 0 diferença(s). Relatórios: `jobs relatorio evolucao_anual` (2018: 22 trabalhos, 1797 citações … 2023: 21, 2400) e `jobs relatorio exporta_parceiro` (CSV `instituicao,trabalhos,citacoes`, 6 linhas). Saídas em `exercicios/aula-4/golden-master/golden/` (`05_*`, `09_*`). A golden é o oráculo.
+
+| Fatia do plano | Mudança | Mecânica (codemod) ou decisão humana? | Verificação da fatia |
+| --- | --- | --- | --- |
+| 1 | Autenticação OpenAlex: segundo a página de Deprecations, o `mailto` é ignorado e foi substituído por `api_key` (cabeçalho Bearer, fora da URL). Segundo a página de autenticação, o cursor além da primeira página exige chave, o que afeta `paginar` (`cliente.py:52-61`; não testado na API real). Isolar em `cliente.py`. Atenção: a chave de cache é o MD5 da URL (`cliente.py:21`); mudar a URL invalida o cache offline | Mecânica no código; **humano**: obter/guardar a chave e decidir a chave de cache | `golden.py check` igual, com cache regravado só se a chave de cache mudar |
+| 2 | `concepts`→`topics` (`topics.id`, `primary_topic`) e `x_concepts`→consulta `/works` agrupada por tópico | **Decisão humana**: muda a classificação e os números dos relatórios | Report de diferença golden × refatorado (inclui `areas_autores` e CSV `09`); humano aprova |
+| 3 | Preservar `exportado` e a correção de ano na regravação (`INSERT OR REPLACE` apaga a linha e reseta colunas, `ingest.py:17`); troca por upsert | **Decisão humana** (qual valor vale na reingestão) | `golden.py check` deve falhar só nos dumps `10` e `11` (`exportado`, `ano`); o diff vai para revisão humana |
+
+**Limite da leitura e condição para reabrir uma resposta:** não cobre `prod`, `/mnt/compartilhado/parceiro`, quem lê o CSV, cron real, concorrência nem a API real (só cache sintético). Reabrir a 5 se alguém mostrar o ambiente real do cron; a 2 se surgir outro SQL fora do repositório; o plano, quando eu consultar o OpenAlex com chave. Fontes (acesso em 24/10/2026): help.openalex.org/api/authentication/ e help.openalex.org/api/deprecations/.
+
+**Procedência/IA:** ferramenta e modelo visíveis: Claude Code, Sonnet 5.5; tarefa delegada: leitura de apoio, script da golden master, rascunho da análise e consulta à documentação; trecho aproveitado: `golden.py` e a tabela de análise; minha verificação/intervenção: li o código antes da IA, aprovei cada comando, conferi os trechos e decidi a refutação e o plano. O raciocínio e a decisão registrados são meus.
+
+**Revisão:** [x] cinco respostas com trecho; [x] uma refutação; [x] caracterização; [x] plano em fatias; [x] até uma página.

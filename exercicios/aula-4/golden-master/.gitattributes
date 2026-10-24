@@ -1,0 +1,2 @@
+# A golden é comparada byte a byte: sem conversão de fim de linha (core.autocrlf).
+golden/* -text

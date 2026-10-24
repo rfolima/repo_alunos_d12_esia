@@ -1,0 +1,8 @@
+exit=0
+--stdout--
+Aprendizado de Máquina          65
+Inteligência Artificial         59
+Mineração de Dados              58
+Engenharia de Software          52
+--stderr(ultima linha)--
+

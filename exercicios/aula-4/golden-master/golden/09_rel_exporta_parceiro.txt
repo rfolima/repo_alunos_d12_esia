@@ -1,0 +1,5 @@
+exit=0
+--stdout--
+gerado: saida_parceiro\trabalhos_por_instituicao.csv
+--stderr(ultima linha)--
+

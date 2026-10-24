@@ -1,0 +1,9 @@
+exit=0
+--stdout--
+Universidade Federal de Teste                   64
+Universidade Exemplo do Recife                  64
+Universidade de Exemplolândia                   58
+Centro de Pesquisa Imaginário                   46
+Instituto Fictício de Tecnologia                10
+--stderr(ultima linha)--
+

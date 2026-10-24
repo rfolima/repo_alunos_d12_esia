@@ -1,0 +1,5 @@
+exit=0
+--stdout--
+Ciência da Computação           30
+--stderr(ultima linha)--
+
